@@ -1,0 +1,7 @@
+secret.env
+node_modules/**
+bin/**
+
+serviceAccountKey.json
+database.sqlite
+package-lock.json
