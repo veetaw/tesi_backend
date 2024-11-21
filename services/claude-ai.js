@@ -11,8 +11,6 @@ const {
   MultipleChoiceQuestion,
   OpenQuestion,
 } = require("../models/model");
-const { type } = require("os");
-const { text } = require("express");
 
 var history = [];
 var oq_history = [];
@@ -118,7 +116,7 @@ class ClaudeAI {
           content: Prompt.get_oq_check_prompt(domanda, risposta),
         },
       ],
-    }); 
+    });
 
     console.log("RAW CHECK_OQ RESPONSE ", message.content[0].text);
 
@@ -130,39 +128,39 @@ class ClaudeAI {
   async explain(token, pdfBuffer, highlight) {
     try {
       if (!sessionHistory[token]) {
-        const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
-            
+        const pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
+
         sessionHistory[token] = [
           {
             role: "user",
             content: [
               {
-                type: 'document',
+                type: "document",
                 source: {
-                  media_type: 'application/pdf',
-                  type: 'base64',
+                  media_type: "application/pdf",
+                  type: "base64",
                   data: pdfBase64,
                 },
               },
               {
-                type: 'text',
-                text: Prompt.get_explain_prompt(highlight)
-              }
+                type: "text",
+                text: Prompt.get_explain_prompt(highlight),
+              },
             ],
           },
         ];
       }
-      
 
-      const message = await this.client.messages.create({
-        model: ClaudeConst.CLAUDE_MODEL,
+      const message = await this.client.beta.messages.create({
+        model: "claude-3-5-sonnet-20241022",
+        betas: ["pdfs-2024-09-25"],
         max_tokens: ClaudeConst.CLAUDE_MAX_TOKENS,
         temperature: ClaudeConst.CLAUDE_TEMPERATURE,
         system: Prompt.sys_explain_prompt,
         messages: sessionHistory[token],
       });
 
-      console.log(message.content)
+      console.log(message.content);
 
       console.log("RAW EXPLAIN RESPONSE ", message.content[0].text);
 
@@ -175,6 +173,52 @@ class ClaudeAI {
         role: "assistant",
         content: sanitizedJsonText,
       });
+
+      return JSON.parse(sanitizedJsonText);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  async gen_quiz_pdf(pdfBuffer) {
+    try {
+      const pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
+
+      const message = await this.client.beta.messages.create({
+        model: "claude-3-5-sonnet-20241022",
+        betas: ["pdfs-2024-09-25"],
+        max_tokens: ClaudeConst.CLAUDE_MAX_TOKENS,
+        temperature: ClaudeConst.CLAUDE_TEMPERATURE,
+        system: Prompt.sys_genquiz_prompt,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "document",
+                source: {
+                  media_type: "application/pdf",
+                  type: "base64",
+                  data: pdfBase64,
+                },
+              },
+              {
+                type: "text",
+                text: Prompt.genquiz_prompt,
+              },
+            ],
+          },
+        ],
+      });
+
+      console.log(message.content);
+
+      console.log("RAW EXPLAIN RESPONSE ", message.content[0].text);
+
+      const sanitizedJsonText = message.content[0].text.replace(
+        /[\r\n]+/g,
+        " "
+      );
 
       return JSON.parse(sanitizedJsonText);
     } catch (e) {
@@ -200,7 +244,7 @@ class ClaudeAI {
     const message = await this.client.beta.messages.create({
       max_tokens: ClaudeConst.CLAUDE_MAX_TOKENS,
       temperature: ClaudeConst.CLAUDE_TEMPERATURE,
-      model: 'claude-3-5-sonnet-20241022',
+      model: "claude-3-5-sonnet-20241022",
       betas: ["pdfs-2024-09-25"],
       system: Prompt.sys_explain_prompt,
       messages: sessionHistory[token],
@@ -228,13 +272,12 @@ class ClaudeAI {
     });
 
     const corso = await Corso.findByPk(id_corso);
-    const argomenti = corso ? corso.argomenti : '';
+    const argomenti = corso ? corso.argomenti : "";
 
     const message = await this.client.beta.messages.create({
       max_tokens: ClaudeConst.CLAUDE_MAX_TOKENS,
       temperature: ClaudeConst.CLAUDE_TEMPERATURE,
-      model: 'claude-3-5-sonnet-20241022',
-      betas: ["pdfs-2024-09-25"],
+      model: "claude-3-5-sonnet-20240620",
       system: Prompt.get_sys_explain_prompt(argomenti),
       messages: sessionHistory[token],
     });

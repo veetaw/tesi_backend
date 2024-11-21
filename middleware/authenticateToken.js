@@ -11,8 +11,6 @@ const authenticateToken = async (req, res, next) => {
     
     const decodedToken = await admin.auth().verifyIdToken(token);
 
-    console.log(decodedToken);
-
     req.user = decodedToken;
     next();
   } catch (error) {

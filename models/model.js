@@ -103,6 +103,29 @@ const OpenQuestion = sequelize.define("OpenQuestion", {
   },
 });
 
+// Modello Leaderboard
+const Leaderboard = sequelize.define("Leaderboard", {
+  user_id: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+  },
+  course_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  punteggio: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  nome: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  }
+});
+
+Corso.hasMany(Leaderboard, { as: "leaderboards", foreignKey: "course_id" });
+Leaderboard.belongsTo(Corso, { foreignKey: "course_id" });
+
 Corso.hasMany(Level, { as: "levels" });
 Level.belongsTo(Corso);
 
@@ -112,4 +135,4 @@ MultipleChoiceQuestion.belongsTo(Level);
 Level.hasMany(OpenQuestion, { as: "open_questions" });
 OpenQuestion.belongsTo(Level);
 
-module.exports = { Corso, Level, MultipleChoiceQuestion, OpenQuestion };
+module.exports = { Corso, Level, MultipleChoiceQuestion, OpenQuestion, Leaderboard };
